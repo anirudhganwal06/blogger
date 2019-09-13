@@ -4,16 +4,36 @@ import { connect } from 'react-redux';
 import classnames from 'classnames';
 
 import { signup } from '../../actions/auth'
+import validateSignupInput from '../../validation/signup';
 
 
 class Signup extends Component {
-    state = {
-        name: '',
-        username: '',
-        email: '',
-        password1: '',
-        password2: '',
-        errors: {}
+    constructor(props) {
+        super(props);
+        this.state = {
+            name: '',
+            username: '',
+            email: '',
+            password1: '',
+            password2: '',
+            isChanged: {
+                name: false,
+                username: false,
+                email: false,
+                password1: false,
+                password2: false
+            },
+            errors: {},
+            loading: false
+        }
+    }
+
+    componentDidMount = () => {
+        console.log('componentDidMount');
+        console.log(this.props);
+        if (this.props.auth.isLoggedIn) {
+            this.props.history.push('/dashboard');
+        }
     }
 
     componentWillReceiveProps(nextProps) {
@@ -23,31 +43,61 @@ class Signup extends Component {
     }
 
     onChange = event => {
+        const newState = {
+            ...this.state,
+            [event.target.name]: event.target.value,
+            isChanged: {
+                ...this.state.isChanged,
+                [event.target.name]: true
+            }
+        };
+        const { errors } = validateSignupInput(newState);
         this.setState({
-            [event.target.name]: event.target.value
+            [event.target.name]: event.target.value,
+            isChanged: {
+                ...this.state.isChanged,
+                [event.target.name]: true
+            },
+            errors: errors
         });
     }
 
-    onSubmit = event => {
+
+    onSubmit = async event => {
         event.preventDefault();
+        await this.setState({
+            loading: true
+        });
         const newUserData = {
             ...this.state
         }
-        console.log(newUserData);
-        this.props.signup(newUserData);
-        console.log('Clicked');
+        await this.props.signup(newUserData);
+        await this.setState({
+            loading: false
+        });
     }
 
     render = () => {
         const { errors } = this.state;
-        // console.log('start');
-        // console.log(errors);
-        // console.log('end');
+
+        let button = '';
+        if (this.state.loading) {
+            button = (
+                <button className="btn btn-primary" type="button" disabled>
+                    Signing Up...
+                    <span className="spinner-border spinner-border-sm ml-3" role="status" aria-hidden="true"></span>
+                </button>
+            );
+        } else {
+            button = (
+                <button type="submit" className="btn btn-primary">Sign Up</button>
+            );
+        }
+
         return (
             <section>
                 <div className="container my-form">
                     <h1 className="text-center">Sign Up</h1>
-                    <h1>{errors.username}</h1>
                     <form onSubmit={this.onSubmit}>
                         <div className="form-group">
                             <label htmlFor="name">Name</label>
@@ -76,7 +126,7 @@ class Signup extends Component {
                             <input type="password" name="password2" className={classnames("form-control", { "is-invalid": errors.password2 })} id="InputPassword2" placeholder="Confirm Password" onChange={this.onChange} />
                             {errors.password2 && <div className="invalid-feedback">{errors.password2}</div>}
                         </div>
-                        <button type="submit" className="btn btn-primary">Sign Up</button>
+                        {button}
                     </form>
                 </div>
             </section>
@@ -87,7 +137,7 @@ class Signup extends Component {
 const mapStateToProps = state => {
     return {
         auth: state.auth,
-        errors: state.errors
+        errors: state.errors,
     }
 }
 
