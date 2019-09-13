@@ -1,0 +1,14 @@
+main {
+  margin: 20px 0;
+}
+
+footer {
+  padding: 20px;
+  color: white;
+}
+
+/***************************  FORM  ******************************/
+
+.my-form {
+  max-width: 500px;
+}
